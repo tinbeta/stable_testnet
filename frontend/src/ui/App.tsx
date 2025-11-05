@@ -22,6 +22,8 @@ export const App: React.FC = () => {
 	const [deployed, setDeployed] = useState<DeployedAddresses>({});
 	const [logs, setLogs] = useState<LogItem[]>([]);
 	const [nativeBalance, setNativeBalance] = useState<string>('');
+	const [sendTo, setSendTo] = useState<string>('');
+	const [sendAmount, setSendAmount] = useState<string>('');
 
 	const signerPromise = useMemo(async () => {
 		if (!provider) return null;
@@ -165,6 +167,30 @@ async function ensureStableNetwork(prov: BrowserProvider) {
 		}
 	}
 
+	async function sendToken() {
+		if (!provider) return;
+		if (!ethers.isAddress(sendTo)) {
+			pushLog({ type: 'error', message: 'Recipient address is invalid.' });
+			return;
+		}
+		if (!sendAmount || Number(sendAmount) <= 0) {
+			pushLog({ type: 'error', message: 'Enter a valid amount.' });
+			return;
+		}
+		setBusy(true);
+		try {
+			const signer = await provider.getSigner();
+			const value = ethers.parseUnits(sendAmount, 18);
+			const tx = await signer.sendTransaction({ to: sendTo, value });
+			await tx.wait();
+			pushLog({ type: 'success', message: `Sent ${sendAmount} gUSDT`, href: txLink(tx.hash) });
+		} catch (e: any) {
+			pushLog({ type: 'error', message: getErrorMessage(e) });
+		} finally {
+			setBusy(false);
+		}
+	}
+
 	return (
 		<div style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: '24px 20px', fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif', color: '#E6EAF2', background: '#0B0F1A', minHeight: '100vh' }}>
 			<h2 style={{ marginBottom: 6, color: '#E6EAF2' }}>ESC Stable Testnet DApp</h2>
@@ -201,6 +227,32 @@ async function ensureStableNetwork(prov: BrowserProvider) {
 					<div style={{ display: 'flex', gap: 8 }}>
 						<button onClick={deployToken} disabled={!provider || busy} style={{ background: '#2C7BE5', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 8 }}>Deploy</button>
 						<button onClick={mintToken} disabled={!provider || !deployed.token || busy} style={{ background: '#6ECB5A', color: '#0B0F1A', border: 'none', padding: '8px 14px', borderRadius: 8 }}>Mint</button>
+					</div>
+				</div>
+				<div style={{ border: '1px solid #3B476A', padding: 16, borderRadius: 12, background: '#121826' }}>
+					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+						<h3 style={{ margin: 0, color: '#E6EAF2' }}>Send gUSDT</h3>
+					</div>
+					<div style={{ display: 'grid', gap: 8 }}>
+						<input
+							type="text"
+							placeholder="Recipient address (0x...)"
+							value={sendTo}
+							onChange={e => setSendTo(e.target.value.trim())}
+							style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2' }}
+						/>
+						<input
+							type="number"
+							min="0"
+							step="0.000000000000000001"
+							placeholder="Amount (gUSDT)"
+							value={sendAmount}
+							onChange={e => setSendAmount(e.target.value)}
+							style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2' }}
+						/>
+						<div style={{ display: 'flex', gap: 8 }}>
+						<button onClick={sendToken} disabled={!provider || busy} style={{ background: '#2C7BE5', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 8 }}>Send</button>
+						</div>
 					</div>
 				</div>
 			</div>
