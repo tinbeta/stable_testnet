@@ -24,6 +24,7 @@ export const App: React.FC = () => {
 	const [nativeBalance, setNativeBalance] = useState<string>('');
 	const [sendTo, setSendTo] = useState<string>('');
 	const [sendAmount, setSendAmount] = useState<string>('');
+	const [swapAmount, setSwapAmount] = useState<string>('');
 
 	const signerPromise = useMemo(async () => {
 		if (!provider) return null;
@@ -191,6 +192,30 @@ async function ensureStableNetwork(prov: BrowserProvider) {
 		}
 	}
 
+	async function swapTokens() {
+		if (!provider || !deployed.token) return;
+		if (!swapAmount || Number(swapAmount) <= 0) {
+			pushLog({ type: 'error', message: 'Enter a valid amount.' });
+			return;
+		}
+		setBusy(true);
+		try {
+			const signer = await provider.getSigner();
+			const contract = new Contract(deployed.token, EscbaseTokenArtifact.abi, signer);
+			const value = ethers.parseUnits(swapAmount, 18);
+			const escAmount = value * BigInt(100000);
+			const escAmountFormatted = ethers.formatUnits(escAmount, 18);
+			const tx = await contract.swap({ value });
+			await tx.wait();
+			pushLog({ type: 'success', message: `Swapped ${swapAmount} gUSDT for ${escAmountFormatted} ESC`, href: txLink(tx.hash) });
+			setSwapAmount('');
+		} catch (e: any) {
+			pushLog({ type: 'error', message: getErrorMessage(e) });
+		} finally {
+			setBusy(false);
+		}
+	}
+
 	return (
 		<div style={{ width: '100%', maxWidth: 1240, margin: '0 auto', padding: '24px 20px', fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif', color: '#E6EAF2', background: '#0B0F1A', minHeight: '100vh' }}>
 			<h2 style={{ marginBottom: 6, color: '#E6EAF2' }}>ESC Stable Testnet DApp</h2>
@@ -234,13 +259,35 @@ async function ensureStableNetwork(prov: BrowserProvider) {
 						<h3 style={{ margin: 0, color: '#E6EAF2' }}>Send gUSDT</h3>
 					</div>
 					<div style={{ display: 'grid', gap: 8 }}>
-						<input
-							type="text"
-							placeholder="Recipient address (0x...)"
-							value={sendTo}
-							onChange={e => setSendTo(e.target.value.trim())}
-							style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2' }}
-						/>
+						<div style={{ position: 'relative', width: '100%' }}>
+							<input
+								type="text"
+								placeholder="Recipient address (0x...)"
+								value={sendTo}
+								onChange={e => setSendTo(e.target.value.trim())}
+								style={{ width: '100%', padding: '10px 80px 10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2' }}
+							/>
+							<button 
+								onClick={() => setSendTo(signerAddress)} 
+								disabled={!provider || !signerAddress} 
+								style={{ 
+									position: 'absolute', 
+									right: 4, 
+									top: '50%', 
+									transform: 'translateY(-50%)',
+									background: '#2C7BE5', 
+									color: '#fff', 
+									border: 'none', 
+									padding: '6px 12px', 
+									borderRadius: 6,
+									fontSize: 13,
+									cursor: (!provider || !signerAddress) ? 'not-allowed' : 'pointer',
+									opacity: (!provider || !signerAddress) ? 0.5 : 1
+								}}
+							>
+								Myself
+							</button>
+						</div>
 						<input
 							type="number"
 							min="0"
@@ -253,6 +300,43 @@ async function ensureStableNetwork(prov: BrowserProvider) {
 						<div style={{ display: 'flex', gap: 8 }}>
 						<button onClick={sendToken} disabled={!provider || busy} style={{ background: '#2C7BE5', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 8 }}>Send</button>
 						</div>
+					</div>
+				</div>
+				<div style={{ border: '1px solid #3B476A', padding: 16, borderRadius: 12, background: '#121826' }}>
+					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+						<h3 style={{ margin: 0, color: '#E6EAF2' }}>Swap gUSDT to ESC</h3>
+						<span style={{ fontSize: 12, color: '#9AA4B2' }}>Rate: 0.0001 gUSDT = 10 ESC</span>
+					</div>
+					<div style={{ display: 'grid', gap: 8 }}>
+						{!deployed.token && (
+							<div style={{ padding: '8px 12px', borderRadius: 8, background: '#2A1F1F', border: '1px solid #5C3A3A', color: '#FF6B6B', fontSize: 14, marginBottom: 4 }}>
+								Phải tạo EscbaseToken contract trước
+							</div>
+						)}
+						<input
+							type="number"
+							min="0"
+							step="0.000000000000000001"
+							placeholder="Amount (gUSDT)"
+							value={swapAmount}
+							onChange={e => setSwapAmount(e.target.value)}
+							disabled={!deployed.token}
+							style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2', opacity: !deployed.token ? 0.5 : 1 }}
+						/>
+						{swapAmount && Number(swapAmount) > 0 && deployed.token && (
+							<div style={{ padding: '8px 12px', borderRadius: 8, background: '#0F1524', border: '1px solid #2F3A5C', color: '#9AA4B2', fontSize: 14 }}>
+								You will receive: {(() => {
+									try {
+										const value = ethers.parseUnits(swapAmount, 18);
+										const escAmount = value * BigInt(100000);
+										return ethers.formatUnits(escAmount, 18);
+									} catch {
+										return '0';
+									}
+								})()} ESC
+							</div>
+						)}
+						<button onClick={swapTokens} disabled={!provider || !deployed.token || busy} style={{ background: !deployed.token ? '#3B476A' : '#6ECB5A', color: !deployed.token ? '#9AA4B2' : '#0B0F1A', border: 'none', padding: '8px 14px', borderRadius: 8, cursor: !deployed.token ? 'not-allowed' : 'pointer' }}>Swap</button>
 					</div>
 				</div>
 			</div>

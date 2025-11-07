@@ -34,6 +34,7 @@ export interface EscbaseTokenInterface extends Interface {
       | "name"
       | "owner"
       | "renounceOwnership"
+      | "swap"
       | "symbol"
       | "totalSupply"
       | "transfer"
@@ -68,6 +69,7 @@ export interface EscbaseTokenInterface extends Interface {
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "swap", values?: undefined): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -97,6 +99,7 @@ export interface EscbaseTokenInterface extends Interface {
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "swap", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -233,6 +236,8 @@ export interface EscbaseToken extends BaseContract {
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
+  swap: TypedContractMethod<[], [void], "payable">;
+
   symbol: TypedContractMethod<[], [string], "view">;
 
   totalSupply: TypedContractMethod<[], [bigint], "view">;
@@ -295,6 +300,9 @@ export interface EscbaseToken extends BaseContract {
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "swap"
+  ): TypedContractMethod<[], [void], "payable">;
   getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
