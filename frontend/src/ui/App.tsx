@@ -288,15 +288,37 @@ async function ensureStableNetwork(prov: BrowserProvider) {
 								Myself
 							</button>
 						</div>
-						<input
-							type="number"
-							min="0"
-							step="0.000000000000000001"
-							placeholder="Amount (gUSDT)"
-							value={sendAmount}
-							onChange={e => setSendAmount(e.target.value)}
-							style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2' }}
-						/>
+						<div style={{ position: 'relative', width: '100%' }}>
+							<input
+								type="number"
+								min="0"
+								step="0.000000000000000001"
+								placeholder="Amount (gUSDT)"
+								value={sendAmount}
+								onChange={e => setSendAmount(e.target.value)}
+								style={{ width: '100%', padding: '10px 80px 10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2' }}
+							/>
+							<button 
+								onClick={() => setSendAmount('0.0001')} 
+								disabled={!provider} 
+								style={{ 
+									position: 'absolute', 
+									right: 4, 
+									top: '50%', 
+									transform: 'translateY(-50%)',
+									background: '#2C7BE5', 
+									color: '#fff', 
+									border: 'none', 
+									padding: '6px 12px', 
+									borderRadius: 6,
+									fontSize: 13,
+									cursor: !provider ? 'not-allowed' : 'pointer',
+									opacity: !provider ? 0.5 : 1
+								}}
+							>
+								0.0001
+							</button>
+						</div>
 						<div style={{ display: 'flex', gap: 8 }}>
 						<button onClick={sendToken} disabled={!provider || busy} style={{ background: '#2C7BE5', color: '#fff', border: 'none', padding: '8px 14px', borderRadius: 8 }}>Send</button>
 						</div>
@@ -313,16 +335,38 @@ async function ensureStableNetwork(prov: BrowserProvider) {
 								Phải tạo EscbaseToken contract trước
 							</div>
 						)}
-						<input
-							type="number"
-							min="0"
-							step="0.000000000000000001"
-							placeholder="Amount (gUSDT)"
-							value={swapAmount}
-							onChange={e => setSwapAmount(e.target.value)}
-							disabled={!deployed.token}
-							style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2', opacity: !deployed.token ? 0.5 : 1 }}
-						/>
+						<div style={{ position: 'relative', width: '100%' }}>
+							<input
+								type="number"
+								min="0"
+								step="0.000000000000000001"
+								placeholder="Amount (gUSDT)"
+								value={swapAmount}
+								onChange={e => setSwapAmount(e.target.value)}
+								disabled={!deployed.token}
+								style={{ width: '100%', padding: '10px 80px 10px 12px', borderRadius: 8, border: '1px solid #2F3A5C', background: '#0F1524', color: '#E6EAF2', opacity: !deployed.token ? 0.5 : 1 }}
+							/>
+							<button 
+								onClick={() => setSwapAmount('0.0001')} 
+								disabled={!provider || !deployed.token} 
+								style={{ 
+									position: 'absolute', 
+									right: 4, 
+									top: '50%', 
+									transform: 'translateY(-50%)',
+									background: '#2C7BE5', 
+									color: '#fff', 
+									border: 'none', 
+									padding: '6px 12px', 
+									borderRadius: 6,
+									fontSize: 13,
+									cursor: (!provider || !deployed.token) ? 'not-allowed' : 'pointer',
+									opacity: (!provider || !deployed.token) ? 0.5 : 1
+								}}
+							>
+								0.0001
+							</button>
+						</div>
 						{swapAmount && Number(swapAmount) > 0 && deployed.token && (
 							<div style={{ padding: '8px 12px', borderRadius: 8, background: '#0F1524', border: '1px solid #2F3A5C', color: '#9AA4B2', fontSize: 14 }}>
 								You will receive: {(() => {
